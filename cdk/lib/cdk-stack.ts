@@ -210,8 +210,10 @@ export class CdkStackALBEksBg extends cdk.Stack {
     });
 
 
-    repository.onCommit('OnCommit', {
-      target: new targets.CodeBuildProject(codebuild.Project.fromProjectArn(this, 'OnCommitEvent', project.projectArn))
+    repository.onCommit("OnCommit", {
+      target: new targets.CodeBuildProject(
+        codebuild.Project.fromProjectName(this, "OnCommitEvent", project.projectName)
+      ),
     });
 
     ecrRepo.grantPullPush(project.role!)

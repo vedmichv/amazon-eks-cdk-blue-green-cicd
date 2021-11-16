@@ -38,9 +38,9 @@ echo "============================================"
 echo "------CAPTURE COMPLETE, BEGIN EXECUTION-----"
 echo "============================================"
 
-echo "Sleep for 5 seconds to allow termination of resources"
+echo "Sleep for 10 seconds to allow termination of resources"
 set -x
-sleep 5
+sleep 10
 
 export ALB_POLICY_NAME=alb-ingress-controller
 policyExists=$(aws iam list-policies | jq '.Policies[].PolicyName' | grep alb-ingress-controller | tr -d '["\r\n]')
@@ -56,13 +56,15 @@ if [ ! -f iam_policy.json ]; then
 fi
 aws iam put-role-policy --role-name $NODE_ROLE_NAME --policy-name elb-policy --policy-document file://iam_policy.json
 
-#Install cert-manager
+#Install cert-manager, and waiting cert-manager is ready
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=controller -n cert-manager
 
 #Add Controller to Cluster
 wget -O alb-ingress-controller.yaml https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.3.0/v2_3_0_full.yaml
 sed -i "s/your-cluster-name/$CLUSTER_NAME/g" alb-ingress-controller.yaml
 kubectl apply -f alb-ingress-controller.yaml
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=aws-load-balancer-controller -n kube-system
 
 #Check
 kubectl get pods -n kube-system

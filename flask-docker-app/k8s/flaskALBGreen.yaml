@@ -11,6 +11,7 @@ spec:
     - name: web
       port: 8080
       targetPort: 5000
+      protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment

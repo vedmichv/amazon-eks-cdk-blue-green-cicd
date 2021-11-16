@@ -51,10 +51,10 @@ if [[ "$policyExists" != "alb-ingress-controller" ]]; then
 fi
 
 #Attach IAM policy to Worker Node Role
-if [ ! -f iam-policy.json ]; then
-    curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.1/docs/install/iam_policy.json
+if [ ! -f iam_policy.json ]; then
+    wget -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.1/docs/install/iam_policy.json
 fi
-aws iam put-role-policy --role-name $NODE_ROLE_NAME --policy-name elb-policy --policy-document file://iam-policy.json
+aws iam put-role-policy --role-name $NODE_ROLE_NAME --policy-name elb-policy --policy-document file://iam_policy.json
 
 #Install cert-manager
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml

@@ -29,6 +29,7 @@ export class CdkStackALBEksBg extends cdk.Stack {
     });
 
     const cluster = new eks.Cluster(this, 'Cluster', {
+      version: eks.KubernetesVersion.V1_21,
       vpc,
       defaultCapacity: 2,
       mastersRole: clusterAdmin,

@@ -46,28 +46,27 @@ export ALB_POLICY_NAME=alb-ingress-controller
 policyExists=$(aws iam list-policies | jq '.Policies[].PolicyName' | grep alb-ingress-controller | tr -d '["\r\n]')
 if [[ "$policyExists" != "alb-ingress-controller" ]]; then
     echo "Policy does not exist, creating..."
-    export ALB_POLICY_ARN=$(aws iam create-policy --region=$REGION --policy-name $ALB_POLICY_NAME --policy-document "https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/master/docs/examples/iam-policy.json" --query "Policy.Arn" | sed 's/"//g')
+    export ALB_POLICY_ARN=$(aws iam create-policy --region=$REGION --policy-name $ALB_POLICY_NAME --policy-document "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.1/docs/install/iam_policy.json" --query "Policy.Arn" | sed 's/"//g')
     aws iam attach-role-policy --region=$REGION --role-name=$NODE_ROLE_NAME --policy-arn=$ALB_POLICY_ARN
 fi
 
-#Create Ingress Controller
-if [ ! -f alb-ingress-controller.yaml ]; then
-    wget https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v2.3.0/docs/examples/alb-ingress-controller.yaml
+#Attach IAM policy to Worker Node Role
+if [ ! -f iam-policy.json ]; then
+    curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.1/docs/install/iam_policy.json
 fi
-sed -i "s/devCluster/$CLUSTER_NAME/g" alb-ingress-controller.yaml
-sed -i "s/# - --cluster-name/- --cluster-name/g" alb-ingress-controller.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v2.3.0/docs/examples/rbac-role.yaml
+aws iam put-role-policy --role-name $NODE_ROLE_NAME --policy-name elb-policy --policy-document file://iam-policy.json
+
+#Install cert-manager
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml
+
+#Add Controller to Cluster
+wget -O alb-ingress-controller.yaml https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.3.0/v2_3_0_full.yaml
+sed -i "s/your-cluster-name/$CLUSTER_NAME/g" alb-ingress-controller.yaml
 kubectl apply -f alb-ingress-controller.yaml
 
 #Check
 kubectl get pods -n kube-system
 #kubectl logs -n kube-system $(kubectl get po -n kube-system | egrep -o "alb-ingress[a-zA-Z0-9-]+")
-
-#Attach IAM policy to Worker Node Role
-if [ ! -f iam-policy.json ]; then
-    curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/master/docs/examples/iam-policy.json
-fi
-aws iam put-role-policy --role-name $NODE_ROLE_NAME --policy-name elb-policy --policy-document file://iam-policy.json
 
 #Instantiate Blue and Green PODS
 kubectl apply -f flask-ALB-namespace.yaml

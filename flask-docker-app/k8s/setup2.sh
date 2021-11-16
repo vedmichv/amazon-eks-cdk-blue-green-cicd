@@ -14,8 +14,9 @@ echo "========================"
 set -x
 rm flaskALBIngress_query.yaml
 rm flaskALBIngress_query2.yaml
-wget https://raw.githubusercontent.com/aws-samples/amazon-eks-cdk-blue-green-cicd/master/flask-docker-app/k8s/flaskALBIngress_query.yaml
-wget https://raw.githubusercontent.com/aws-samples/amazon-eks-cdk-blue-green-cicd/master/flask-docker-app/k8s/flaskALBIngress_query2.yaml
+# TODO - change github repo to aws-samples
+wget https://raw.githubusercontent.com/vedmichv/amazon-eks-cdk-blue-green-cicd/master/flask-docker-app/k8s/flaskALBIngress_query.yaml
+wget https://raw.githubusercontent.com/vedmichv/amazon-eks-cdk-blue-green-cicd/master/flask-docker-app/k8s/flaskALBIngress_query2.yaml
 rm alb-ingress-controller.yaml
 kubectl delete svc/flask-svc-alb-blue svc/flask-svc-alb-green -n flask-alb
 kubectl delete deploy/flask-deploy-alb-blue deploy/flask-deploy-alb-green -n flask-alb
@@ -51,11 +52,11 @@ fi
 
 #Create Ingress Controller
 if [ ! -f alb-ingress-controller.yaml ]; then
-    wget https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.5/docs/examples/alb-ingress-controller.yaml
+    wget https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v2.3.0/docs/examples/alb-ingress-controller.yaml
 fi
 sed -i "s/devCluster/$CLUSTER_NAME/g" alb-ingress-controller.yaml
 sed -i "s/# - --cluster-name/- --cluster-name/g" alb-ingress-controller.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.5/docs/examples/rbac-role.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v2.3.0/docs/examples/rbac-role.yaml
 kubectl apply -f alb-ingress-controller.yaml
 
 #Check
